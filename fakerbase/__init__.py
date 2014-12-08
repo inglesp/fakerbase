@@ -1,8 +1,8 @@
-from django.db.models import Manager, QuerySet
-from django.db.models.lookups import Exact
+from django.db.models import Manager, QuerySet, lookups
+from django.db.models.sql.where import WhereNode
 from django.test import TestCase, TransactionTestCase
 
-from .relalg import Relation, union, eq, F
+from .relalg import Relation, union, predicate_fns, F, and_, or_, not_
 
 
 assert len(Manager.__bases__) == 1
@@ -11,35 +11,47 @@ OrigManagerBase = Manager.__bases__[0]
 orig_queryset_iterator = QuerySet.iterator
 
 
+def build_predicate(node):
+    if isinstance(node, lookups.BuiltinLookup):
+        predicate_fn = predicate_fns[node.lookup_name]
+        fieldname = node.lhs.target.name
+        value = node.rhs
+
+        predicate = predicate_fn(F(fieldname), value)
+
+    elif isinstance(node, WhereNode):
+        child_predicates = [build_predicate(child) for child in node.children]
+
+        if node.connector == 'AND':
+            predicate = and_(*child_predicates)
+        else:
+            predicate = or_(*child_predicates)
+
+        if node.negated:
+            predicate = not_(predicate)
+
+    return predicate
+
+
 def fakerbase_iterator(self):
     database = FakerbaseManager._FakerbaseManager__database
 
     compiler = self.query.get_compiler(using=self.db)
     compiler.pre_sql_setup()
 
-    assert len(self.query.tables) == 1
+    assert len(self.query.tables) == 1, 'Can only handle queries of a single table'
 
     table = self.query.tables[0]
     join = self.query.alias_map[table]
 
-    assert join.table_name == join.rhs_alias
-    assert len(join.join_cols) == 1
-    assert join.join_type is None
+    assert join.table_name == join.rhs_alias, 'Can only handle queries with no alias'
+    assert join.join_type is None, 'Cannot handle joins'
 
     rel = database[join.table_name]
 
     if self.query.where.children:
-        where = self.query.where
-        assert where.connector == 'AND'
-        assert not where.negated
-        assert len(where.children) == 1
-        child = where.children[0]
-        assert isinstance(child, Exact)
-        fieldname = child.lhs.target.name
-        value = child.rhs
-
-        p = eq(F(fieldname), value)
-        rel = rel.select(p)
+        predicate = build_predicate(self.query.where)
+        rel = rel.select(predicate)
 
     return [self.model(**dict(zip(rel.attrs, t))) for t in rel.tuples]
 
