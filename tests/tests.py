@@ -1,18 +1,18 @@
 from django.test import TestCase
 from django.db.models import Q
 
-from .models import M
+from .models import M, N
 
 
-class AllTest(TestCase):
-    def test_filter(self):
+class AllTests(TestCase):
+    def test_all(self):
         m1 = M.objects.create(a=1)
         m2 = M.objects.create(a=2)
 
         self.assertItemsEqual([m1, m2], M.objects.all())
 
 
-class FilterTest(TestCase):
+class FilterTests(TestCase):
     def test_filter(self):
         m1 = M.objects.create(a=1)
         m2 = M.objects.create(a=2)
@@ -79,3 +79,23 @@ class FilterTest(TestCase):
         m3 = M.objects.create(c='cde')
 
         self.assertItemsEqual([m2, m3], M.objects.filter(c__contains='cd'))
+
+
+class RelationshipTests(TestCase):
+    def test_many_to_one(self):
+        m1 = M.objects.create(a=1)
+        m2 = M.objects.create(a=2)
+        n1 = N.objects.create(m=m1)
+        n2 = N.objects.create(m=m1)
+        n3 = N.objects.create(m=m2)
+
+        self.assertItemsEqual([n1, n2], N.objects.filter(m__a=1))
+
+    def test_one_to_many(self):
+        m1 = M.objects.create()
+        m2 = M.objects.create()
+        n1 = N.objects.create(a=1, m=m1)
+        n2 = N.objects.create(a=2, m=m1)
+        n3 = N.objects.create(a=3, m=m2)
+
+        self.assertItemsEqual([m1], M.objects.filter(n__a=1))

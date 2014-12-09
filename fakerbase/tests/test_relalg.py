@@ -11,6 +11,10 @@ class RelationTests(unittest.TestCase):
         self.r3 = Relation(['A', 'B'], [[1, 2], [3, 4]])
         self.r4 = Relation(['A', 'B'], [[3, 4], [5, 6]])
 
+    def test_repr(self):
+        # This just tests that Relation.__repr__ doesn't blow up.
+        repr(self.r1)
+
     def test_project(self):
         r = Relation(['A'], [[0], [1]])
         self.assertEqual(self.r1.project(['A']), r)
@@ -33,6 +37,12 @@ class RelationTests(unittest.TestCase):
         r2 = Relation(['B', 'C', 'D'], [[0, 0, 0], [1, 1, 0]])
         rj = Relation(['A', 'B', 'C', 'D'], [[0, 0, 0, 0], [0, 1, 1, 0]])
         self.assertEqual(natural_join(r1, r2), rj)
+
+    def test_inner_join(self):
+        r1 = Relation(['A', 'B', 'C'], [[0, 0, 0], [0, 1, 1]])
+        r2 = Relation(['D', 'E', 'F'], [[0, 0, 1], [0, 1, 0]])
+        rj = Relation(['A', 'B', 'C', 'D', 'E', 'F'], [[0, 0, 0, 0, 0, 1], [0, 1, 1, 0, 1, 0]])
+        self.assertEqual(inner_join(r1, r2, ('A', 'D'), ('B', 'E')), rj)
 
     def test_diff(self):
         r = Relation(['A', 'B'], [[1, 2]])

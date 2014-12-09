@@ -5,6 +5,34 @@ class Relation:
         self.attrs = tuple(attrs)
         self.tuples = {tuple(t) for t in tuples}
 
+    def __repr__(self):
+        cols = range(len(self.attrs))
+
+        headings = [str(attr) for attr in self.attrs]
+
+        widths = [1 + max([len(str(t[i])) for t in self.tuples] + [len(headings[i])]) for i in cols]
+
+        lines = []
+
+        row = []
+        for i in cols:
+            e = ' ' + headings[i] + ' ' * (widths[i] - len(headings[i]))
+            row.append(e)
+
+        lines.append('|'.join(row))
+
+        lines.append('+'.join(['-' * (widths[i] + 1) for i in cols]))
+
+        for t in self.tuples:
+            row = []
+            for i in cols:
+                e = ' ' + str(t[i]) + ' ' * (widths[i] - len(str(t[i])))
+                row.append(e)
+
+            lines.append('|'.join(row))
+
+        return '\n'.join([''] + lines + [''])
+
     def __eq__(self, other):
         return self.attrs == other.attrs and self.tuples == other.tuples
 
@@ -46,6 +74,12 @@ def natural_join(rel1, rel2):
     predicate = and_(*[eq(F((1, attr)), F((2, attr))) for attr in common_attrs])
     join_rel = cross_rel.select(predicate)
     return join_rel.project(joined_attrs).rename(renamed_attrs)
+
+
+def inner_join(rel1, rel2, *attr_pairs):
+    cross_rel = cross(rel1, rel2)
+    predicate = and_(*[eq(F(attr1), F(attr2)) for attr1, attr2 in attr_pairs])
+    return cross_rel.select(predicate)
 
 
 def diff(rel1, rel2):
