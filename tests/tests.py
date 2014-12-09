@@ -3,6 +3,12 @@ from django.db.models import Q
 
 from .models import M, N
 
+try:
+    TestCase.assertItemsEqual
+except AttributeError:
+    # python3
+    TestCase.assertItemsEqual = TestCase.assertCountEqual
+
 
 class AllTests(TestCase):
     def test_all(self):
