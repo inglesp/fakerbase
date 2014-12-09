@@ -41,8 +41,6 @@ def fakerbase_iterator(self):
     compiler = self.query.get_compiler(using=self.db)
     compiler.pre_sql_setup()
 
-    assert len(self.query.tables) <= 2, 'Can only handle queries of at most two tables'
-
     first = True
 
     for alias in self.query.tables:

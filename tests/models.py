@@ -17,3 +17,7 @@ class N(models.Model, _unicode__mixin):
     a = models.IntegerField()
     m = models.ForeignKey('M')
 
+
+class O(models.Model, _unicode__mixin):
+    a = models.IntegerField()
+    n = models.ForeignKey('N')

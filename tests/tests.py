@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.db.models import Q
 
-from .models import M, N
+from .models import M, N, O
 
 try:
     TestCase.assertItemsEqual
@@ -105,3 +105,27 @@ class RelationshipTests(TestCase):
         n3 = N.objects.create(a=3, m=m2)
 
         self.assertItemsEqual([m1], M.objects.filter(n__a=1))
+
+    def test_many_to_one_through(self):
+        m1 = M.objects.create(a=1)
+        m2 = M.objects.create(a=2)
+        n1 = N.objects.create(m=m1)
+        n2 = N.objects.create(m=m1)
+        n3 = N.objects.create(m=m2)
+        o1 = O.objects.create(n=n1)
+        o2 = O.objects.create(n=n2)
+        o3 = O.objects.create(n=n3)
+
+        self.assertItemsEqual([o1, o2], O.objects.filter(n__m__a=1))
+
+    def test_one_to_many_through(self):
+        m1 = M.objects.create()
+        m2 = M.objects.create()
+        n1 = N.objects.create(m=m1)
+        n2 = N.objects.create(m=m1)
+        n3 = N.objects.create(m=m2)
+        o1 = O.objects.create(a=1, n=n1)
+        o2 = O.objects.create(a=1, n=n2)
+        o3 = O.objects.create(a=2, n=n3)
+
+        self.assertItemsEqual([m1], M.objects.filter(n__o__a=1))

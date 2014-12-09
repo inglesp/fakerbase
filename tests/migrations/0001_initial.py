@@ -34,4 +34,15 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, tests.models._unicode__mixin),
         ),
+        migrations.CreateModel(
+            name='O',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('a', models.IntegerField()),
+                ('n', models.ForeignKey(to='tests.N')),
+            ],
+            options={
+            },
+            bases=(models.Model, tests.models._unicode__mixin),
+        ),
     ]
