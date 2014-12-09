@@ -1,5 +1,6 @@
 from django.db.models import Manager, QuerySet, lookups
 from django.db.models.sql.where import WhereNode
+from django.db.models.sql.expressions import SQLEvaluator
 from django.test import TestCase, TransactionTestCase
 
 from .relalg import Relation, union, inner_join, predicate_fns, F, and_, or_, not_
@@ -17,9 +18,13 @@ def build_predicate(node):
         lhs = node.lhs
         assert lhs.target == lhs.source, 'Expect query lhs target to equal source'
         attr = (lhs.alias, lhs.target.name)
-        value = node.rhs
 
-        predicate = predicate_fn(F(attr), value)
+        rhs = node.rhs
+        if isinstance(rhs, SQLEvaluator):
+            assert len(rhs.cols) == 1, 'Can only handle SQLEvaluator with single column'
+            predicate = predicate_fn(F(attr), F(rhs.cols[0][1]))
+        else:
+            predicate = predicate_fn(F(attr), rhs)
 
     elif isinstance(node, WhereNode):
         child_predicates = [build_predicate(child) for child in node.children]

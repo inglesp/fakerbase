@@ -1,5 +1,5 @@
 from django.test import TestCase
-from django.db.models import Q
+from django.db.models import F, Q
 
 from .models import M, N, O, P
 
@@ -85,6 +85,12 @@ class FilterTests(TestCase):
         m3 = M.objects.create(c='cde')
 
         self.assertItemsEqual([m2, m3], M.objects.filter(c__contains='cd'))
+
+    def test_filter_references(self):
+        m1 = M.objects.create(a=1, b=2)
+        m2 = M.objects.create(a=2, b=1)
+
+        self.assertItemsEqual([m2], M.objects.filter(a__gt=F('b')))
 
 
 class RelationshipTests(TestCase):
