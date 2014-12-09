@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.db.models import Q
 
-from .models import M, N, O
+from .models import M, N, O, P
 
 try:
     TestCase.assertItemsEqual
@@ -88,7 +88,7 @@ class FilterTests(TestCase):
 
 
 class RelationshipTests(TestCase):
-    def test_many_to_one(self):
+    def test_foreign_key(self):
         m1 = M.objects.create(a=1)
         m2 = M.objects.create(a=2)
         n1 = N.objects.create(m=m1)
@@ -97,7 +97,7 @@ class RelationshipTests(TestCase):
 
         self.assertItemsEqual([n1, n2], N.objects.filter(m__a=1))
 
-    def test_one_to_many(self):
+    def test_foreign_key_reverse(self):
         m1 = M.objects.create()
         m2 = M.objects.create()
         n1 = N.objects.create(a=1, m=m1)
@@ -106,7 +106,7 @@ class RelationshipTests(TestCase):
 
         self.assertItemsEqual([m1], M.objects.filter(n__a=1))
 
-    def test_many_to_one_through(self):
+    def test_foreign_key_through(self):
         m1 = M.objects.create(a=1)
         m2 = M.objects.create(a=2)
         n1 = N.objects.create(m=m1)
@@ -118,7 +118,7 @@ class RelationshipTests(TestCase):
 
         self.assertItemsEqual([o1, o2], O.objects.filter(n__m__a=1))
 
-    def test_one_to_many_through(self):
+    def test_foreign_key_reverse_through(self):
         m1 = M.objects.create()
         m2 = M.objects.create()
         n1 = N.objects.create(m=m1)
@@ -129,3 +129,27 @@ class RelationshipTests(TestCase):
         o3 = O.objects.create(a=2, n=n3)
 
         self.assertItemsEqual([m1], M.objects.filter(n__o__a=1))
+
+    def test_many_to_many(self):
+        m1 = M.objects.create(a=1)
+        m2 = M.objects.create(a=2)
+        p1 = P.objects.create()
+        p2 = P.objects.create()
+        p3 = P.objects.create()
+        p1.ms.add(m1)
+        p2.ms.add(m1)
+        p3.ms.add(m2)
+
+        self.assertItemsEqual([p1, p2], P.objects.filter(ms__a=1))
+
+    def test_many_to_many_reverse(self):
+        m1 = M.objects.create()
+        m2 = M.objects.create()
+        p1 = P.objects.create(a=1)
+        p2 = P.objects.create(a=2)
+        p3 = P.objects.create(a=3)
+        p1.ms.add(m1)
+        p2.ms.add(m1)
+        p3.ms.add(m2)
+
+        self.assertItemsEqual([m1], M.objects.filter(p__a=1))

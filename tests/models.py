@@ -21,3 +21,8 @@ class N(models.Model, _unicode__mixin):
 class O(models.Model, _unicode__mixin):
     a = models.IntegerField()
     n = models.ForeignKey('N')
+
+
+class P(models.Model, _unicode__mixin):
+    a = models.IntegerField()
+    ms = models.ManyToManyField('M')

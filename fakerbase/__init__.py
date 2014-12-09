@@ -90,26 +90,33 @@ class FakerbaseManager(OrigManagerBase):
             return self.__insert(*args, **kwargs)
 
     def __insert(self, objs, fields, return_id=False, raw=False, using=None):
-        assert len(objs) == 1
-        assert return_id
+        assert not (return_id and len(objs) != 1), 'Cannot return id if inserting more than one object'
         assert not raw
-
-        self.__last_id += 1
-        obj = objs[0]
 
         table_name = self.__table_name()
 
-        attrs = ['id'] + [field.attname for field in fields]
-        namespaced_attrs = [(table_name, attr) for attr in attrs]
-        t = [self.__last_id] + [getattr(obj, field.attname) for field in fields]
+        for obj in objs:
+            self.__last_id += 1
 
-        if table_name in self.__database:
-            rel = self.__database[table_name]
-        else:
-            rel = Relation(namespaced_attrs, set())
+            attrs = [field.attname for field in fields]
 
-        self.__database[table_name] = union(rel, Relation(namespaced_attrs, [t]))
-        return self.__last_id
+            if 'id' in attrs:
+                t = [getattr(obj, field.attname) for field in fields]
+            else:
+                attrs = ['id'] + attrs
+                t = [self.__last_id] + [getattr(obj, field.attname) for field in fields]
+
+            namespaced_attrs = [(table_name, attr) for attr in attrs]
+
+            if table_name in self.__database:
+                rel = self.__database[table_name]
+            else:
+                rel = Relation(namespaced_attrs, set())
+
+            self.__database[table_name] = union(rel, Relation(namespaced_attrs, [t]))
+
+        if return_id:
+            return self.__last_id
 
     def __table_name(self):
         return self.model._meta.db_table

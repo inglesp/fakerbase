@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
             name='M',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('a', models.IntegerField()),
-                ('b', models.IntegerField()),
+                ('a', models.IntegerField(null=True)),
+                ('b', models.IntegerField(null=True)),
                 ('c', models.CharField(max_length=255)),
             ],
             options={
@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
             name='N',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('a', models.IntegerField()),
+                ('a', models.IntegerField(null=True)),
                 ('m', models.ForeignKey(to='tests.M')),
             ],
             options={
@@ -38,8 +38,19 @@ class Migration(migrations.Migration):
             name='O',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('a', models.IntegerField()),
+                ('a', models.IntegerField(null=True)),
                 ('n', models.ForeignKey(to='tests.N')),
+            ],
+            options={
+            },
+            bases=(models.Model, tests.models._unicode__mixin),
+        ),
+        migrations.CreateModel(
+            name='P',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('a', models.IntegerField(null=True)),
+                ('ms', models.ManyToManyField(to='tests.M')),
             ],
             options={
             },
