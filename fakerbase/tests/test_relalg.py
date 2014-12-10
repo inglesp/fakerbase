@@ -44,6 +44,13 @@ class RelationTests(unittest.TestCase):
         rj = Relation(['A', 'B', 'C', 'D', 'E', 'F'], [[0, 0, 0, 0, 0, 1], [0, 1, 1, 0, 1, 0]])
         self.assertEqual(inner_join(r1, r2, ('A', 'D'), ('B', 'E')), rj)
 
+    def test_left_outer_join(self):
+        r1 = Relation(['A', 'B', 'C'], [[0, 0, 0], [0, 1, 1], [0, 2, 2]])
+        r2 = Relation(['D', 'E', 'F'], [[0, 0, 1], [0, 1, 0]])
+        rj = Relation(['A', 'B', 'C', 'D', 'E', 'F'], [[0, 0, 0, 0, 0, 1], [0, 1, 1, 0, 1, 0], [0, 2, 2, None, None, None]])
+
+        self.assertEqual(left_outer_join(r1, r2, ('A', 'D'), ('B', 'E')), rj)
+
     def test_diff(self):
         r = Relation(['A', 'B'], [[1, 2]])
         self.assertEqual(diff(self.r3, self.r4), r)
