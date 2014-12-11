@@ -3,4 +3,4 @@ python:
   - "2.7"
   - "3.4"
 install: pip install -r requirements-dev.txt
-script: python manage.py test
+script: make test

@@ -1,6 +1,5 @@
 INSTALLED_APPS = [
     'tests',
-    'fakerbase',
 ]
 
 # The following are required by Django to run the tests. {
