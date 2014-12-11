@@ -1,5 +1,8 @@
 # Fakerbase
 
+[![Build Status](https://travis-ci.org/inglesp/fakerbase.svg?branch=master)](https://travis-ci.org/inglesp/fakerbase)
+[![Code Health](https://landscape.io/github/inglesp/fakerbase/master/landscape.svg)](https://landscape.io/github/inglesp/fakerbase/master)
+
 Speed up your Django test suite with Fakerbase!
 
 Rather than converting each database request to SQL, sending it to the
