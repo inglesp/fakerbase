@@ -3,7 +3,7 @@ from django.db.models.sql.where import WhereNode
 from django.db.models.sql.expressions import SQLEvaluator
 from django.test import TestCase, TransactionTestCase
 
-from .relalg import Relation, union, inner_join, predicate_fns, F, and_, or_, not_
+from .relalg import Relation, union, inner_join, left_outer_join, predicate_fns, F, and_, or_, not_, aggr_fns
 
 
 assert len(Manager.__bases__) == 1
@@ -61,24 +61,51 @@ def fakerbase_iterator(self):
             assert join.join_type is None, 'Expect join_type to be None'
             rel = database[rhs_alias]
             first = False
-        else:
-            assert join.join_type == 'INNER JOIN', 'Can only handle INNER JOINs'
+        elif join.join_type == 'INNER JOIN':
             attr_pair = ((lhs_alias, lhs_col), (rhs_alias, rhs_col))
             rel = inner_join(rel, database[rhs_alias], attr_pair)
+        elif join.join_type == 'LEFT OUTER JOIN':
+            attr_pair = ((lhs_alias, lhs_col), (rhs_alias, rhs_col))
+            rel = left_outer_join(rel, database[rhs_alias], attr_pair)
+        else:
+            assert False, 'Unexpected join_type: {}'.format(join.join_type)
 
     if self.query.where.children:
         predicate = build_predicate(self.query.where)
         rel = rel.select(predicate)
 
+    if self.query.having.children:
+        assert False, 'Cannot handle queries with HAVING clause'
+
+    if self.query.aggregate_select:
+        aggrs = []
+        for key, col in self.query.aggregate_select.items():
+            assert col.field == col.source, 'Expect column field to equal source'
+            aggr_type = type(col).__name__.lower()
+            attr = col.col
+            aggrs.append((aggr_fns[aggr_type](attr), key))
+
+        rel = rel.group_by(self.query.group_by, aggrs)
+
     table_name = self.model._meta.db_table
 
-    attrs = [attr for attr in rel.attrs if attr[0] == table_name]
-    rel = rel.project(attrs)
+    field_attrs = [attr for attr in rel.attrs if attr[0] == table_name]
+    field_attr_ixs = [rel.attrs.index(attr) for attr in field_attrs]
+    field_attr_names = [attr[1] for attr in field_attrs]
 
-    attrs = [attr[1] for attr in rel.attrs]
-    rel = rel.rename(attrs)
+    objs = []
 
-    return [self.model(**dict(zip(rel.attrs, t))) for t in rel.tuples]
+    for t in rel.tuples:
+        values = [t[ix] for ix in field_attr_ixs]
+        obj = self.model(**dict(zip(field_attr_names, values)))
+
+        for key in self.query.aggregate_select:
+            ix = rel.attrs.index(key)
+            setattr(obj, key, t[ix])
+
+        objs.append(obj)
+
+    return objs
 
 
 class FakerbaseManager(OrigManagerBase):
