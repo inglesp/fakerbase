@@ -113,9 +113,7 @@ def left_outer_join(rel1, rel2, *attr_pairs):
     rel1_included = ij_rel.project(rel1.attrs)
     rel1_excluded = diff(rel1, rel1_included)
 
-    extension = (None,) * len(rel2.attrs)
-    extra_tuples = [t + extension for t in rel1_excluded.tuples]
-    extra_rel = Relation(ij_rel.attrs, extra_tuples)
+    extra_rel = cross(rel1_excluded, Relation(rel2.attrs, [(None,) * len(rel2.attrs)]))
 
     return union(ij_rel, extra_rel)
 
