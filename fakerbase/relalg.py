@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+
 class Relation:
     def __init__(self, attrs, tuples):
         n = len(attrs)
@@ -51,6 +54,28 @@ class Relation:
         selected_dicts = [d for d in dicts if predicate(d)]
         selected_tuples = {tuple(d[k] for k in self.attrs) for d in selected_dicts}
         return Relation(self.attrs, selected_tuples)
+
+    def group_by(self, grouping_attrs, aggrs):
+        assert set(grouping_attrs) <= set(self.attrs)
+
+        ixs = [self.attrs.index(a) for a in grouping_attrs]
+        groups = defaultdict(list)
+
+        for t in self.tuples:
+            key = tuple(t[ix] for ix in ixs)
+            record = dict(zip(self.attrs, t))
+            groups[key].append(record)
+
+        new_attrs = grouping_attrs + [aggr[1] for aggr in aggrs]
+        new_tuples = set()
+
+        for key, group in groups.items():
+            t = key
+            for aggr in aggrs:
+                t += tuple([aggr[0](group)])
+            new_tuples.add(t)
+
+        return Relation(new_attrs, new_tuples)
 
 
 def cross(rel1, rel2):
@@ -170,3 +195,23 @@ def not_(p):
 
 def F(fieldname):
     return {'field': fieldname}
+
+
+aggr_lookups = {
+    'sum': sum,
+    'min': min,
+    'max': max,
+    'count': len,
+    'avg': lambda values: sum(values) * 1.0 / len(values),
+}
+
+
+def build_aggr_fn(lookup):
+    def aggr_fn(attr):
+        def aggr(group):
+            values = [record[attr] for record in group]
+            return lookup(values)
+        return aggr
+    return aggr_fn
+
+aggr_fns = {key: build_aggr_fn(lookup) for key, lookup in aggr_lookups.items()}

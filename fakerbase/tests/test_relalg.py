@@ -27,6 +27,16 @@ class RelationTests(unittest.TestCase):
         predicate = eq(F('A'), 1)
         self.assertEqual(self.r1.select(predicate), r)
 
+    def test_group_by(self):
+        r = Relation(['A', 'B', 'C'], [[0, 0, 0], [1, 0, 0], [1, 2, 4]])
+        rg = Relation(['A', 'count(B)', 'sum(C)'], [[0, 1, 0], [1, 2, 4]])
+
+        aggrs = [
+            (aggr_fns['count']('B'), 'count(B)'),
+            (aggr_fns['sum']('C'), 'sum(C)'),
+        ]
+        self.assertEqual(r.group_by(['A'], aggrs), rg)
+
     def test_cross(self):
         ra = Relation(['A'], [[0], [1]])
         rb = Relation(['B'], [[0], [1]])
